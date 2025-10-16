@@ -39,7 +39,7 @@ This project demonstrates how to implement secure file uploads and downloads usi
 │   URLs)             │      └──────────────────┘
 └──────┬──────────────┘
        │
-       │ 3. Return signed URL
+       │ 3. Return signed URL (https://cdn-demo.pe-labs.com/...)
        ▼
 ┌─────────────┐
 │   Client    │
@@ -74,7 +74,7 @@ This project demonstrates how to implement secure file uploads and downloads usi
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/cloudfront-signed-urls-demo.git
+git clone https://github.com/akabdulhanif/cloudfront-signed-urls-demo.git
 cd cloudfront-signed-urls-demo
 ```
 
@@ -96,9 +96,9 @@ custom_domain_enabled = true
 domain_name          = "pe-labs.com"
 subdomain            = "cdn-demo"
 
-# CloudFront signing keys (generated automatically if not provided)
-cloudfront_public_key  = ""  # Leave empty to auto-generate
-cloudfront_private_key = ""  # Leave empty to auto-generate
+# CloudFront signing keys (leave empty for auto-generation)
+cloudfront_public_key  = ""
+cloudfront_private_key = ""
 ```
 
 ### 3. Deploy Infrastructure
@@ -125,7 +125,7 @@ curl -X POST "$API_URL/api/files/upload" \
   -H "Content-Type: application/json" \
   -d '{"filename":"test.txt","contentType":"text/plain"}' | jq '.'
 
-# Upload file
+# Upload file (use uploadUrl from response)
 echo "Hello CloudFront!" > test.txt
 curl -X PUT -H "Content-Type: text/plain" \
   --data-binary "@test.txt" \
@@ -135,55 +135,62 @@ curl -X PUT -H "Content-Type: text/plain" \
 curl "$API_URL/api/files" | jq '.'
 ```
 
+### 5. Test with Custom Domain
+
+Run the comprehensive test script:
+
+```bash
+cd scripts
+./test-with-custom-domain.sh
+```
+
+This verifies that all file operations use your custom domain (`cdn-demo.pe-labs.com`).
+
 ## 📁 Project Structure
 
 ```
 cloudfront-signed-urls-demo/
-├── README.md                    # This file
-├── LICENSE                      # MIT License
-├── .gitignore                   # Git ignore rules
+├── README.md                          # This file
+├── LICENSE                            # MIT License
+├── .gitignore                         # Git ignore rules (excludes keys!)
 │
-├── terraform/                   # Terraform infrastructure code
-│   ├── main.tf                  # Main infrastructure resources
-│   ├── variables.tf             # Input variables
-│   ├── outputs.tf               # Output values
-│   ├── lambda.tf                # Lambda function configuration
-│   ├── cloudfront.tf            # CloudFront distribution
-│   ├── terraform.tfvars.example # Example configuration
-│   └── README.md                # Terraform documentation
+├── terraform/                         # Terraform infrastructure code
+│   ├── main.tf                        # Main infrastructure resources
+│   ├── variables.tf                   # Input variables
+│   ├── outputs.tf                     # Output values
+│   └── terraform.tfvars.example       # Example configuration
 │
-├── lambda/                      # Lambda function code
-│   ├── index.py                 # Main Lambda handler
-│   ├── requirements.txt         # Python dependencies
-│   ├── build.sh                 # Build deployment package
-│   └── README.md                # Lambda documentation
+├── lambda/                            # Lambda function code
+│   ├── index.py                       # Main Lambda handler
+│   ├── requirements.txt               # Python dependencies
+│   └── build.sh                       # Build deployment package
 │
-├── scripts/                     # Utility scripts
-│   ├── deploy.sh                # One-click deployment
-│   ├── test-api.sh              # API testing script
-│   ├── generate-keys.sh         # Generate CloudFront key pair
-│   └── cleanup.sh               # Destroy infrastructure
+├── scripts/                           # Utility scripts
+│   ├── deploy.sh                      # One-click deployment
+│   ├── test-api.sh                    # API testing script
+│   └── test-with-custom-domain.sh     # Custom domain testing
 │
-├── docs/                        # Documentation
-│   ├── API.md                   # API documentation
-│   ├── DEPLOYMENT.md            # Deployment guide
-│   ├── ARCHITECTURE.md          # Architecture details
-│   ├── TROUBLESHOOTING.md       # Common issues and solutions
-│   └── SECURITY.md              # Security best practices
+├── docs/                              # Documentation
+│   ├── API.md                         # API documentation
+│   ├── ARCHITECTURE.md                # Architecture details
+│   ├── SECURITY.md                    # Security best practices
+│   ├── DEPLOYMENT.md                  # Deployment guide
+│   ├── TESTING.md                     # Testing guide
+│   └── CUSTOM_DOMAIN_TESTING.md       # Custom domain testing guide
 │
-└── examples/                    # Integration examples
-    ├── javascript/              # JavaScript/TypeScript examples
-    ├── python/                  # Python examples
-    └── curl/                    # cURL examples
+└── examples/                          # Integration examples
+    ├── curl/                          # cURL examples
+    └── python/                        # Python examples
 ```
 
 ## 📚 Documentation
 
 - **[API Documentation](docs/API.md)** - Complete API reference with examples
-- **[Deployment Guide](docs/DEPLOYMENT.md)** - Step-by-step deployment instructions
 - **[Architecture Guide](docs/ARCHITECTURE.md)** - Detailed architecture explanation
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
-- **[Security Guide](docs/SECURITY.md)** - Security best practices
+- **[Security Guide](docs/SECURITY.md)** - Security best practices and key management
+- **[Custom Domain Testing](docs/CUSTOM_DOMAIN_TESTING.md)** - How to test with custom domain
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Step-by-step deployment instructions
+- **[Troubleshooting](docs/TESTING.md)** - Common issues and solutions
 
 ## 🔑 Key Features
 
@@ -193,6 +200,27 @@ cloudfront-signed-urls-demo/
 - **PUT and GET Support** - Upload and download with signed URLs
 - **Custom Domain** - Use your own domain instead of CloudFront default
 - **Secure** - Private key stored in AWS Secrets Manager
+
+### Custom Domain Support ✨
+
+**Confirmed Working**: This infrastructure fully supports custom domains through Route53, ACM, and CloudFront.
+
+**How it works**:
+1. API Gateway generates signed URLs
+2. Signed URLs point to your custom CloudFront domain
+3. All file operations happen through your custom domain
+4. End users never see default CloudFront or S3 URLs
+
+**Example**:
+```
+API Gateway generates:
+https://cdn-demo.pe-labs.com/uploads/file.pdf?Policy=...&Signature=...&Key-Pair-Id=...
+
+Users upload/download via:
+cdn-demo.pe-labs.com (your custom domain!)
+```
+
+See [Custom Domain Testing Guide](docs/CUSTOM_DOMAIN_TESTING.md) for details.
 
 ### Serverless Architecture
 
@@ -230,6 +258,7 @@ See [API Documentation](docs/API.md) for detailed information.
 - ✅ IAM roles follow least privilege principle
 - ✅ Encryption at rest for S3 and DynamoDB
 - ✅ Time-limited access (URLs expire)
+- ✅ **Keys never committed to repository** (protected by .gitignore)
 
 See [Security Guide](docs/SECURITY.md) for more details.
 
@@ -251,16 +280,32 @@ Actual costs vary based on usage. See [AWS Pricing](https://aws.amazon.com/prici
 
 ## 🧪 Testing
 
-Run the automated test suite:
+### Automated Testing
+
+Run the comprehensive test suite:
 
 ```bash
 # Test complete upload/download flow
 ./scripts/test-api.sh
 
-# Or use the examples
-cd examples/curl
-./test-flow.sh
+# Test custom domain specifically
+./scripts/test-with-custom-domain.sh
 ```
+
+### Manual Testing
+
+```bash
+# Generate upload URL
+curl -X POST \
+  "https://r1ebp4qfic.execute-api.us-east-1.amazonaws.com/prod/api/files/upload" \
+  -H "Content-Type: application/json" \
+  -d '{"filename":"test.txt","contentType":"text/plain"}' | jq '.'
+
+# The response will include uploadUrl using your custom domain:
+# "uploadUrl": "https://cdn-demo.pe-labs.com/uploads/abc123_test.txt?Policy=...&Signature=...&Key-Pair-Id=..."
+```
+
+See [Custom Domain Testing Guide](docs/CUSTOM_DOMAIN_TESTING.md) for detailed testing instructions.
 
 ## 🤝 Contributing
 
@@ -271,6 +316,8 @@ Contributions are welcome! Please:
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## 📝 License
 
@@ -284,9 +331,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/YOUR_USERNAME/cloudfront-signed-urls-demo/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/YOUR_USERNAME/cloudfront-signed-urls-demo/discussions)
-- **Email**: your.email@example.com
+- **Issues**: [GitHub Issues](https://github.com/akabdulhanif/cloudfront-signed-urls-demo/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/akabdulhanif/cloudfront-signed-urls-demo/discussions)
 
 ## 🗺️ Roadmap
 
@@ -303,11 +349,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - ✅ Core infrastructure working
 - ✅ CloudFront signed URLs functional
-- ✅ Custom domain support
+- ✅ Custom domain support confirmed
 - ✅ API Gateway integration
 - ✅ Lambda function deployed
 - ✅ Documentation complete
-- ⏳ Frontend application (in progress)
+- ✅ Custom domain testing guide
+- ⏳ Frontend application (planned)
 - ⏳ Authentication (planned)
 
 ---
