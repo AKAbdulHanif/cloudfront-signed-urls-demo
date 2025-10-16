@@ -1,0 +1,38 @@
+# Terraform Configuration Example
+# Copy this file to terraform.tfvars and customize for your environment
+# cp terraform.tfvars.example terraform.tfvars
+
+# Project Configuration
+project_name = "cloudfront-signedurl-demo"
+aws_region   = "us-east-1"
+
+# Custom Domain Configuration
+# Set to true to use a custom domain (requires Route53 hosted zone)
+# Set to false to use CloudFront default domain
+custom_domain_enabled = true
+
+# If custom_domain_enabled = true, specify your domain
+domain_name = "pe-labs.com"           # Your root domain (must have Route53 hosted zone)
+subdomain   = "cdn-demo"              # Subdomain for CloudFront (e.g., cdn-demo.pe-labs.com)
+
+# CloudFront Signing Keys
+# IMPORTANT: Leave these empty - keys will be auto-generated and stored in AWS Secrets Manager
+# DO NOT paste actual keys here - they should never be in version control
+cloudfront_public_key  = ""  # Auto-generated if empty
+cloudfront_private_key = ""  # Auto-generated if empty
+
+# URL Expiration Times (in seconds)
+upload_expiration   = 900   # 15 minutes
+download_expiration = 3600  # 1 hour
+
+# Tags
+tags = {
+  Environment = "Production"
+  ManagedBy   = "Terraform"
+  Project     = "CloudFront Signed URLs Demo"
+}
+
+# Optional: Restrict API access to specific IP
+# Leave empty to allow all IPs
+# allowed_ip_cidr = "203.0.113.0/24"
+
