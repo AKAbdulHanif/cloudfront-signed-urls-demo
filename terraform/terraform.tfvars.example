@@ -1,38 +1,66 @@
-# Terraform Configuration Example
+# Terraform Variables Configuration Example
 # Copy this file to terraform.tfvars and customize for your environment
-# cp terraform.tfvars.example terraform.tfvars
 
 # Project Configuration
 project_name = "cloudfront-signedurl-demo"
 aws_region   = "us-east-1"
+environment  = "prod"
 
 # Custom Domain Configuration
-# Set to true to use a custom domain (requires Route53 hosted zone)
-# Set to false to use CloudFront default domain
+# Set custom_domain_enabled = true to use your own domain
+# Requires a Route53 hosted zone for domain_name
 custom_domain_enabled = true
+domain_name          = "example.com"        # Your root domain (must have Route53 hosted zone)
+subdomain            = "cdn"                # Subdomain for CloudFront (e.g., cdn.example.com)
 
-# If custom_domain_enabled = true, specify your domain
-domain_name = "pe-labs.com"           # Your root domain (must have Route53 hosted zone)
-subdomain   = "cdn-demo"              # Subdomain for CloudFront (e.g., cdn-demo.pe-labs.com)
+# CloudFront Signed URL Expiration
+upload_expiration   = 900    # 15 minutes
+download_expiration = 3600   # 1 hour
 
-# CloudFront Signing Keys
-# IMPORTANT: Leave these empty - keys will be auto-generated and stored in AWS Secrets Manager
-# DO NOT paste actual keys here - they should never be in version control
-cloudfront_public_key  = ""  # Auto-generated if empty
-cloudfront_private_key = ""  # Auto-generated if empty
+# Lambda Configuration
+lambda_memory_size = 512
+lambda_timeout     = 30
+lambda_runtime     = "python3.11"
 
-# URL Expiration Times (in seconds)
-upload_expiration   = 900   # 15 minutes
-download_expiration = 3600  # 1 hour
+# DynamoDB Configuration
+dynamodb_billing_mode = "PAY_PER_REQUEST"  # or "PROVISIONED"
+dynamodb_ttl_enabled  = true
+dynamodb_ttl_attribute = "ttl"
+
+# S3 Configuration
+s3_versioning_enabled        = true
+s3_lifecycle_enabled         = false
+s3_lifecycle_expiration_days = 30
+
+# CloudFront Configuration
+cloudfront_price_class = "PriceClass_100"  # US, Canada, Europe
+cloudfront_min_ttl     = 0
+cloudfront_default_ttl = 0
+cloudfront_max_ttl     = 0
+
+# API Gateway Configuration
+api_gateway_stage_name           = "prod"
+api_gateway_throttle_burst_limit = 5000
+api_gateway_throttle_rate_limit  = 10000
+
+# Security Configuration
+enable_waf         = false
+allowed_ip_ranges  = []  # Empty = allow all
+
+# Monitoring Configuration
+enable_cloudwatch_logs = true
+log_retention_days     = 30
+
+# Advanced Configuration
+enable_point_in_time_recovery     = false
+enable_s3_encryption              = true
+cloudfront_geo_restriction_type   = "none"  # none, whitelist, or blacklist
+cloudfront_geo_restriction_locations = []
 
 # Tags
 tags = {
-  Environment = "Production"
-  ManagedBy   = "Terraform"
   Project     = "CloudFront Signed URLs Demo"
+  ManagedBy   = "Terraform"
+  Environment = "Production"
+  Owner       = "Your Name"
 }
-
-# Optional: Restrict API access to specific IP
-# Leave empty to allow all IPs
-# allowed_ip_cidr = "203.0.113.0/24"
-

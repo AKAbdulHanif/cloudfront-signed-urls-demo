@@ -1,30 +1,42 @@
 #!/bin/bash
 
-# Build Lambda deployment package
+# Lambda Deployment Package Build Script
 
 set -e
 
-echo "Building Lambda deployment package..."
+echo "=========================================="
+echo "Building Lambda Deployment Package"
+echo "=========================================="
+echo ""
 
-# Create build directory
-BUILD_DIR="build"
-rm -rf "$BUILD_DIR"
-mkdir -p "$BUILD_DIR"
-
-# Copy Lambda function
-cp index.py "$BUILD_DIR/"
+# Clean previous build
+echo "Cleaning previous build..."
+rm -rf package lambda.zip
+mkdir -p package
 
 # Install dependencies
-pip3 install -r requirements.txt -t "$BUILD_DIR/" --upgrade --quiet
+echo "Installing dependencies..."
+python3 -m pip install -r requirements.txt -t package/ --quiet
 
-# Create ZIP file
-cd "$BUILD_DIR"
-zip -r ../lambda-deployment.zip . -q
+# Copy Lambda function
+echo "Copying Lambda function..."
+cp index.py package/
+
+# Create deployment package
+echo "Creating deployment package..."
+cd package
+zip -r ../lambda.zip . -q
 cd ..
 
 # Clean up
-rm -rf "$BUILD_DIR"
+echo "Cleaning up..."
+rm -rf package
 
-echo "✓ Lambda deployment package created: lambda-deployment.zip"
-echo "  Size: $(du -h lambda-deployment.zip | cut -f1)"
-
+# Show package info
+echo ""
+echo "=========================================="
+echo "Build Complete!"
+echo "=========================================="
+echo "Package: lambda.zip"
+echo "Size: $(du -h lambda.zip | cut -f1)"
+echo ""
