@@ -28,10 +28,11 @@ mkdir -p package
 # Build dependencies using Docker with Lambda Python runtime
 echo "Installing dependencies using Docker..."
 docker run --rm \
+  --entrypoint /bin/bash \
   -v "$(pwd)":/var/task \
   -w /var/task \
   public.ecr.aws/lambda/python:3.11 \
-  pip install -r requirements.txt -t package/ --quiet
+  -c "pip install -r requirements.txt -t package/ --no-cache-dir"
 
 # Copy Lambda function
 echo "Copying Lambda function..."
@@ -56,5 +57,13 @@ echo "Package: lambda.zip"
 echo "Size: $(du -h lambda.zip | cut -f1)"
 echo ""
 echo "The package is now compatible with AWS Lambda runtime"
+echo ""
+echo "Next steps:"
+echo "  1. Update Lambda function:"
+echo "     aws lambda update-function-code --function-name cloudfront-signedurl-demo-api --zip-file fileb://lambda.zip"
+echo "  2. Wait for update:"
+echo "     aws lambda wait function-updated --function-name cloudfront-signedurl-demo-api"
+echo "  3. Test the API:"
+echo "     curl https://r1ebp4qfic.execute-api.us-east-1.amazonaws.com/prod/api/config | jq '.'"
 echo ""
 
