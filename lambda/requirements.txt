@@ -1,2 +1,1 @@
-# No external dependencies needed!
-# boto3 and cryptography are provided by Lambda runtime
+cryptography>=41.0.0
