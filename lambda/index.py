@@ -88,6 +88,7 @@ def get_cloudfront_signer():
 def generate_signed_url(object_key, expiration_seconds, method='GET'):
     """
     Generate CloudFront signed URL using boto3's CloudFrontSigner
+    For PUT/POST, uses custom policy to avoid method restrictions
     """
     try:
         # Get signer
@@ -96,14 +97,40 @@ def generate_signed_url(object_key, expiration_seconds, method='GET'):
         # Build CloudFront URL
         url = f"https://{CLOUDFRONT_DOMAIN}/{object_key}"
         
-        # Calculate expiration time
-        expire_date = datetime.utcnow() + timedelta(seconds=expiration_seconds)
+        # Calculate expiration time (Unix timestamp)
+        expire_timestamp = int((datetime.utcnow() + timedelta(seconds=expiration_seconds)).timestamp())
         
-        # Generate signed URL
-        signed_url = signer.generate_presigned_url(
-            url,
-            date_less_than=expire_date
-        )
+        # For PUT/POST, we need a custom policy that doesn't restrict HTTP method
+        # CloudFront's canned policy only works for GET requests
+        if method.upper() in ['PUT', 'POST', 'DELETE', 'PATCH']:
+            # Create custom policy JSON
+            policy = {
+                "Statement": [
+                    {
+                        "Resource": url,
+                        "Condition": {
+                            "DateLessThan": {
+                                "AWS:EpochTime": expire_timestamp
+                            }
+                        }
+                    }
+                ]
+            }
+            
+            # Generate signed URL with custom policy
+            import json
+            policy_json = json.dumps(policy, separators=(',', ':'))
+            signed_url = signer.generate_presigned_url(
+                url,
+                policy=policy_json
+            )
+        else:
+            # For GET/HEAD, use simple canned policy
+            expire_date = datetime.utcnow() + timedelta(seconds=expiration_seconds)
+            signed_url = signer.generate_presigned_url(
+                url,
+                date_less_than=expire_date
+            )
         
         return signed_url
     
@@ -130,8 +157,8 @@ def create_response(status_code, body):
 
 def handle_upload(event, body_data):
     """
-    Generate S3 presigned URL for file upload (PUT)
-    Note: Uploads go directly to S3, not through CloudFront
+    Generate CloudFront signed URL for file upload (PUT)
+    Uses custom policy to support PUT operations through CloudFront
     """
     try:
         # Get parameters
@@ -145,17 +172,9 @@ def handle_upload(event, body_data):
         file_id = f"{uuid.uuid4().hex[:8]}_{filename}"
         object_key = f"uploads/{file_id}"
         
-        # Generate S3 presigned URL for upload (not CloudFront signed URL)
-        # Uploads must go directly to S3, CloudFront signed URLs don't support PUT
-        signed_url = s3_client.generate_presigned_url(
-            'put_object',
-            Params={
-                'Bucket': BUCKET_NAME,
-                'Key': object_key,
-                'ContentType': content_type
-            },
-            ExpiresIn=UPLOAD_EXPIRATION
-        )
+        # Generate CloudFront signed URL for upload with custom policy
+        # Custom policy allows PUT operations through CloudFront
+        signed_url = generate_signed_url(object_key, UPLOAD_EXPIRATION, method='PUT')
         
         # Store metadata in DynamoDB
         table = dynamodb.Table(TABLE_NAME)
