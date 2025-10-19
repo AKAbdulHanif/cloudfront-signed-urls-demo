@@ -1,0 +1,23 @@
+# Epic: CloudFront Signed URLs as a Self-Service Capability
+
+**Business Value:** Empower development teams to securely and efficiently manage file uploads and downloads in their applications by providing a self-service, standardized, and secure infrastructure pattern. This will reduce time-to-market for features requiring file handling, improve security posture, and reduce the operational burden on the platform team.
+
+## User Stories
+
+| ID | User Story | Description | Acceptance Criteria |
+| :-- | :--- | :--- | :--- |
+| **Module Development** | | | |
+| 1 | Develop CloudFront Distribution Module | As a platform engineer, I want to create a Service Catalog module for provisioning a CloudFront distribution with dual-path behaviors so that teams can easily set up a secure and performant CDN for their applications. | - Module provisions a CloudFront distribution with a custom domain.<br>- Module supports separate behaviors for `/uploads/*` and `/*`.<br>- Module integrates with a CloudFront Key Group. |
+| 2 | Develop S3 Bucket Module | As a platform engineer, I want to create a Service Catalog module for provisioning a private S3 bucket so that teams have a secure and isolated location to store their application files. | - Module provisions a private S3 bucket.<br>- Bucket policy restricts access to the CloudFront distribution.<br>- Module allows for customizable lifecycle policies. |
+| 3 | Develop CloudFront Key Pair Module | As a platform engineer, I want to create a Service Catalog module that generates a CloudFront public/private key pair so that teams can easily create the necessary credentials for signing URLs. | - Module generates an RSA-2048 key pair.<br>- Public key is uploaded to CloudFront.<br>- Private key is stored in Secrets Manager. |
+| 4 | Develop Secrets Manager Private Key Module | As a platform engineer, I want to create a Service Catalog module that securely stores the private key in AWS Secrets Manager so that teams can access it in a secure and auditable manner. | - Module creates a new secret in Secrets Manager.<br>- The private key is stored as the secret value.<br>- Module outputs the ARN of the secret. |
+| 5 | Develop DynamoDB Metadata Table Module | As a platform engineer, I want to create an optional Service Catalog module for provisioning a DynamoDB table so that teams can store file metadata if their application requires it. | - Module provisions a DynamoDB table with a specified primary key.<br>- Module is optional and can be excluded from the portfolio.<br>- Module outputs the table name and ARN. |
+| 6 | Develop IAM Integration Role Module | As a platform engineer, I want to create a Service Catalog module that creates an IAM role for application integration so that teams can securely access the private key and other resources needed for signing URLs. | - Module creates an IAM role that can be assumed by an application.<br>- Role has permissions to read the private key from Secrets Manager.<br>- Role has permissions to interact with the DynamoDB table (if provisioned). |
+| **Documentation & Onboarding** | | | |
+| 7 | Create Module Documentation | As a platform engineer, I want to create comprehensive documentation for each Service Catalog module so that teams can understand how to use them and what their capabilities are. | - Each module has a README with inputs, outputs, and usage examples.<br>- Documentation is clear, concise, and easy to follow. |
+| 8 | Create Onboarding Guide | As a platform engineer, I want to create an onboarding guide that walks teams through the process of provisioning and using the CloudFront Signed URLs portfolio so that they can get started quickly and easily. | - Guide provides a step-by-step walkthrough of the entire process.<br>- Guide includes code snippets and examples for common use cases. |
+| **Testing & Validation** | | | |
+| 9 | Develop Testing Procedures | As a platform engineer, I want to develop a set of testing and validation procedures for the Service Catalog modules so that we can ensure they are working correctly and securely. | - Procedures cover unit tests, integration tests, and end-to-end tests.<br>- Tests are automated and run as part of a CI/CD pipeline. |
+| **Portfolio & Rollout** | | | |
+| 10 | Create Service Catalog Portfolio | As a platform engineer, I want to create a Service Catalog portfolio that bundles all the CloudFront Signed URLs modules together so that teams can provision the entire stack with a single click. | - Portfolio includes all the necessary modules.<br>- Portfolio is published to the Service Catalog.<br>- Portfolio has a clear name and description. |
+
