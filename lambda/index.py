@@ -130,7 +130,8 @@ def create_response(status_code, body):
 
 def handle_upload(event, body_data):
     """
-    Generate signed URL for file upload (PUT)
+    Generate S3 presigned URL for file upload (PUT)
+    Note: Uploads go directly to S3, not through CloudFront
     """
     try:
         # Get parameters
@@ -144,8 +145,17 @@ def handle_upload(event, body_data):
         file_id = f"{uuid.uuid4().hex[:8]}_{filename}"
         object_key = f"uploads/{file_id}"
         
-        # Generate signed URL for upload
-        signed_url = generate_signed_url(object_key, UPLOAD_EXPIRATION, method='PUT')
+        # Generate S3 presigned URL for upload (not CloudFront signed URL)
+        # Uploads must go directly to S3, CloudFront signed URLs don't support PUT
+        signed_url = s3_client.generate_presigned_url(
+            'put_object',
+            Params={
+                'Bucket': BUCKET_NAME,
+                'Key': object_key,
+                'ContentType': content_type
+            },
+            ExpiresIn=UPLOAD_EXPIRATION
+        )
         
         # Store metadata in DynamoDB
         table = dynamodb.Table(TABLE_NAME)
