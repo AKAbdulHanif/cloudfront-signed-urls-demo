@@ -2,12 +2,12 @@
 
 # Lambda Function
 resource "aws_lambda_function" "main" {
-  filename         = "${path.module}/../lambda/lambda.zip"
+  filename         = "${path.module}/../lambda-java/target/cloudfront-signer-lambda-1.0.0.jar"
   function_name    = local.function_name
   role            = aws_iam_role.lambda_role.arn
-  handler         = "index.lambda_handler"
-  source_code_hash = fileexists("${path.module}/../lambda/lambda.zip") ? filebase64sha256("${path.module}/../lambda/lambda.zip") : null
-  runtime         = var.lambda_runtime
+  handler         = "com.example.CloudFrontSignerHandler::handleRequest"
+  source_code_hash = fileexists("${path.module}/../lambda-java/target/cloudfront-signer-lambda-1.0.0.jar") ? filebase64sha256("${path.module}/../lambda-java/target/cloudfront-signer-lambda-1.0.0.jar") : null
+  runtime         = "java11"
   memory_size     = var.lambda_memory_size
   timeout         = var.lambda_timeout
   
@@ -16,10 +16,10 @@ resource "aws_lambda_function" "main" {
       BUCKET_NAME              = aws_s3_bucket.main.id
       TABLE_NAME               = aws_dynamodb_table.main.name
       CLOUDFRONT_DOMAIN        = var.custom_domain_enabled && var.domain_name != "" ? local.full_domain_name : aws_cloudfront_distribution.main.domain_name
-      CLOUDFRONT_KEY_PAIR_ID   = aws_cloudfront_public_key.main.id
-      PRIVATE_KEY_SECRET_ARN   = aws_secretsmanager_secret.cloudfront_private_key.arn
       UPLOAD_EXPIRATION        = tostring(var.upload_expiration)
       DOWNLOAD_EXPIRATION      = tostring(var.download_expiration)
+      ACTIVE_KEY_ID_PARAM      = aws_ssm_parameter.active_key_id.name
+      ACTIVE_SECRET_ARN_PARAM  = aws_ssm_parameter.active_secret_arn.name
     }
   }
   

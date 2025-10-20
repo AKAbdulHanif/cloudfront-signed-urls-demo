@@ -9,19 +9,8 @@ resource "aws_cloudfront_origin_access_control" "main" {
   signing_protocol                  = "sigv4"
 }
 
-# CloudFront Public Key
-resource "aws_cloudfront_public_key" "main" {
-  name        = "${var.project_name}-public-key"
-  encoded_key = local.cloudfront_public_key_pem
-  comment     = "Public key for CloudFront signed URLs"
-}
-
-# CloudFront Key Group
-resource "aws_cloudfront_key_group" "main" {
-  name    = "${var.project_name}-key-group"
-  comment = "Key group for CloudFront signed URLs"
-  items   = [aws_cloudfront_public_key.main.id]
-}
+# CloudFront Public Keys and Key Groups are now managed in key-rotation.tf
+# This supports zero-downtime key rotation with active/inactive key pairs
 
 # CloudFront Distribution
 resource "aws_cloudfront_distribution" "main" {
@@ -49,8 +38,11 @@ resource "aws_cloudfront_distribution" "main" {
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
     
-    # Trusted key groups for signed URLs
-    trusted_key_groups = [aws_cloudfront_key_group.main.id]
+    # Trusted key groups for signed URLs (both active and inactive for zero-downtime rotation)
+    trusted_key_groups = [
+      aws_cloudfront_key_group.active.id,
+      aws_cloudfront_key_group.inactive.id
+    ]
     
     # Cache settings (disabled for signed URLs)
     min_ttl     = var.cloudfront_min_ttl

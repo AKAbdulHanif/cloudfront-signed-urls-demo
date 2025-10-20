@@ -71,16 +71,6 @@ resource "random_string" "suffix" {
   upper   = false
 }
 
-# Generate CloudFront key pair
-resource "tls_private_key" "cloudfront" {
-  algorithm = "RSA"
-  rsa_bits  = 2048
-}
-
-# Extract public key in PEM format
-locals {
-  cloudfront_public_key_pem = tls_private_key.cloudfront.public_key_pem
-  # Convert to PKCS#1 format (required by CloudFront)
-  cloudfront_private_key_pem = tls_private_key.cloudfront.private_key_pem
-}
+# CloudFront key pairs are now managed in key-rotation.tf
+# This supports zero-downtime key rotation with active/inactive key pairs
 

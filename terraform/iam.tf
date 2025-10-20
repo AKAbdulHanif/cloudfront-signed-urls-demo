@@ -53,7 +53,22 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = aws_secretsmanager_secret.cloudfront_private_key.arn
+        Resource = [
+          aws_secretsmanager_secret.active_private_key.arn,
+          aws_secretsmanager_secret.inactive_private_key.arn
+        ]
+      },
+      {
+        Sid    = "SSMParameterAccess"
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = [
+          aws_ssm_parameter.active_key_id.arn,
+          aws_ssm_parameter.active_secret_arn.arn
+        ]
       },
       {
         Sid    = "S3Access"
